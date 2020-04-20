@@ -3,6 +3,26 @@ import numpy as np
 import json
 from PIL import Image
 
+# util function used in compute_convolution
+def padimage(image, kernel, stride):
+    s = stride
+    (ir, ic) = image.shape
+    (kr, kc) = kernel.shape
+    # padding for rows
+    pr = kr + (ir - 1)*s - ir
+    # padding on the right side edge 
+    prleft = int((pr - (pr % 2))/2  )
+    # padding for columns
+    pc = kc + (ic - 1)*s - ic
+    # padding on the top side edge 
+    pctop = int((pc - (pc % 2))/2)
+    # create a matrix with padded image size 
+    (newimg_r, newimg_c) = (ir+pr, ic+pc)
+    newimg = np.zeros((newimg_r, newimg_c))
+    # fill in the center of the matrix with old image pixel values 
+    newimg[prleft:prleft+ir, pctop:pctop+ic] = image 
+    return newimg, newimg_r, newimg_c
+
 def compute_convolution(I, T, stride=None):
     '''
     This function takes an image <I> and a template <T> (both numpy arrays) 
@@ -12,14 +32,47 @@ def compute_convolution(I, T, stride=None):
     '''
     (n_rows,n_cols,n_channels) = np.shape(I)
 
-    '''
-    BEGIN YOUR CODE
-    '''
-    heatmap = np.random.random((n_rows, n_cols))
+     # init heatmap grid value 
+    corrsum = 0
+    # init an empty heatmap 
+    heatmap = np.zeros(I.shape)
+    
+    # pad image to have full convolution (heatmap size is the same as the image)
+    pddimg_red, pddimg_red_row, pddimg_red_col = padimage(I[:,:,0], T[:,:,0], stride)
+    pddimg_grn, pddimg_grn_row, pddimg_grn_col = padimage(I[:,:,1], T[:,:,1], stride)
+    pddimg_ble, pddimg_ble_row, pddimg_ble_col = padimage(I[:,:,2], T[:,:,2], stride)
+    pddimg = [pddimg_red, pddimg_grn, pddimg_ble]
 
-    '''
-    END YOUR CODE
-    '''
+    assert (pddimg_red_row == pddimg_grn_row) and (pddimg_red_col = pddimg_grn_col)
+    assert (pddimg_red_row == pddimg_ble_row) and (pddimg_red_col = pddimg_ble_col)
+    assert (pddimg_grn_row == pddimg_ble_row) and (pddimg_grn_col = pddimg_ble_col)
+
+    # store padded image rol and col size to ir and ic 
+    (ir, ic) = (pddimg_red_row, pddimg_red_col)
+    # store kernel rol and col size to kr and kc 
+    (kr, kc) = T[:,:,0].shape
+
+    # init covolution starting position 
+    (sr, sc) = (0, 0)
+    stride_rowspace = ir-kr+1 #row space for kernel to move 
+    stride_colspace = ic-kc+1 #column space for kernel to move 
+
+    heatmap = np.zeros(I.shape)
+    # scan the image from left to right, stepping with stride size 
+    for i in range(0, stride_rowspace, stride):
+        # scan the image from top to bottom, stepping with stride size 
+        for j in range(0, stride_colspace, stride):
+            # compute convolution of the scanned image window and given kernel 
+            for k in range(0, kr):
+                ii = k + i #image window row position
+                # perform dot product/convolution row by row 
+                # TODO pending on whether to use 2d-conv or 3-d conv 
+                rsum = np.dot(paddedimage[ii,j:(j+kc)], T[k,:])
+                # sum up all row sums 
+                corrsum += rsum 
+            # finished computing one kenerl-size correlation, store in new image array 
+            heatmap[i//stride,j//stride] = corrsum 
+            corrsum = 0 #cummulates dot product(between image windown and kernel) heatmap of each row 
 
     return heatmap
 
