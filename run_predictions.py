@@ -31,49 +31,52 @@ def compute_convolution(I, T, stride=None):
     window_size, padding) to create additional functionality. 
     '''
     (n_rows,n_cols,n_channels) = np.shape(I)
+    # only takes in rgb images 
+    assert n_channels == 3 
 
      # init heatmap grid value 
-    corrsum = 0
-    # init an empty heatmap 
-    heatmap = np.zeros(I.shape)
-    
-    # pad image to have full convolution (heatmap size is the same as the image)
+    corrsum = 0 #correlation sum of kernel and scanned image window 
+    # init an empty 3d heatmap 
+    heatmap3d = np.zeros(I.shape)
+
+    # pad image to have full convolution (result heatmap size is the same as the image)
     pddimg_red, pddimg_red_row, pddimg_red_col = padimage(I[:,:,0], T[:,:,0], stride)
     pddimg_grn, pddimg_grn_row, pddimg_grn_col = padimage(I[:,:,1], T[:,:,1], stride)
     pddimg_ble, pddimg_ble_row, pddimg_ble_col = padimage(I[:,:,2], T[:,:,2], stride)
-    pddimg = [pddimg_red, pddimg_grn, pddimg_ble]
 
-    assert (pddimg_red_row == pddimg_grn_row) and (pddimg_red_col = pddimg_grn_col)
-    assert (pddimg_red_row == pddimg_ble_row) and (pddimg_red_col = pddimg_ble_col)
-    assert (pddimg_grn_row == pddimg_ble_row) and (pddimg_grn_col = pddimg_ble_col)
+    pddimg = np.dstack((pddimg_red, pddimg_grn, pddimg_ble))
+
+    assert (pddimg_red_row == pddimg_grn_row) and (pddimg_red_col == pddimg_grn_col)
+    assert (pddimg_red_row == pddimg_ble_row) and (pddimg_red_col == pddimg_ble_col)
+    assert (pddimg_grn_row == pddimg_ble_row) and (pddimg_grn_col == pddimg_ble_col)
 
     # store padded image rol and col size to ir and ic 
     (ir, ic) = (pddimg_red_row, pddimg_red_col)
     # store kernel rol and col size to kr and kc 
-    (kr, kc) = T[:,:,0].shape
+    (kr, kc) = T[:, :, 0].shape
 
     # init covolution starting position 
     (sr, sc) = (0, 0)
     stride_rowspace = ir-kr+1 #row space for kernel to move 
     stride_colspace = ic-kc+1 #column space for kernel to move 
 
-    heatmap = np.zeros(I.shape)
-    # scan the image from left to right, stepping with stride size 
-    for i in range(0, stride_rowspace, stride):
-        # scan the image from top to bottom, stepping with stride size 
-        for j in range(0, stride_colspace, stride):
-            # compute convolution of the scanned image window and given kernel 
-            for k in range(0, kr):
-                ii = k + i #image window row position
-                # perform dot product/convolution row by row 
-                # TODO pending on whether to use 2d-conv or 3-d conv 
-                rsum = np.dot(paddedimage[ii,j:(j+kc)], T[k,:])
-                # sum up all row sums 
-                corrsum += rsum 
-            # finished computing one kenerl-size correlation, store in new image array 
-            heatmap[i//stride,j//stride] = corrsum 
-            corrsum = 0 #cummulates dot product(between image windown and kernel) heatmap of each row 
-
+    for ch in range(0,3):
+        # scan the image from left to right, stepping with stride size 
+        for i in range(0, stride_rowspace, stride):
+            # scan the image from top to bottom, stepping with stride size 
+            for j in range(0, stride_colspace, stride):
+                # compute convolution of the scanned image window and given kernel 
+                for k in range(0, kr):
+                    ii = k + i #image window row position
+                    # perform dot product/convolution row by row 
+                    rsum = np.dot(pddimg[ii,j:(j+kc),ch], T[k,:,ch])
+                    # sum up all row sums 
+                    corrsum += rsum 
+                # finished computing one kenerl-size correlation, store in new image array 
+                heatmap3d[i//stride,j//stride,ch] = corrsum
+                corrsum = 0 #clear current keneral-image correlation sum for next scan 
+    heatmap = np.sum(heatmap3d, axis=2)
+    # print(heatmap.shape)
     return heatmap
 
 
