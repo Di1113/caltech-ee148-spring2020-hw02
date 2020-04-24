@@ -7,8 +7,25 @@ def compute_iou(box_1, box_2):
     This function takes a pair of bounding boxes and returns intersection-over-
     union (IoU) of two bounding boxes.
     '''
-    iou = np.random.random()
-    
+    x = [box_1[1], box_1[3], box_2[1], box_2[3]]
+    y = [box_1[0], box_1[2], box_2[0], box_2[2]]
+
+    box_1_width = x[1] - x[0]
+    box_2_width = x[2] - x[3]
+    box_1_height = y[1] - y[0]
+    box_2_height = y[2] - y[3]
+
+    x = sort(x)
+    y = sort(y)
+
+    if ((x[3]-x[0]) > (box_1_width + box_2_width)) or 
+        ((y[3]-y[0]) > (box_1_height + box_2_height)):
+        iou = 0
+    else: 
+        i = (x[2]-x[1])*(y[2]-y[1])
+        u = box_1_width * box_1_height + box_2_width * box_2_height - i 
+        iou = i / u 
+
     assert (iou >= 0) and (iou <= 1.0)
 
     return iou
