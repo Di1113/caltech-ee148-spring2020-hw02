@@ -4,6 +4,7 @@ import json
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 # from numba import jit
+import seaborn as sns 
 
 # ---- testrun0-17-----------
 # T_img = Image.open('redlightspot.jpg')
@@ -35,6 +36,10 @@ T_red = (T[:,:,2]*(-1)+255)/255 * red_weight
 T_grn = (T[:,:,2]*(-1)+255)/255 * grn_weight
 T_ble = (T[:,:,2]*(-1)+255)/255 * ble_weight
 T = np.dstack((T_red, T_grn, T_ble))
+
+# ---- testrun20 ------------
+# T_img = Image.open('redlightspot.jpg')
+# T = np.asarray(T_img).copy()[:, :, :3 ]
 
 
 template_width, template_height, dc = T.shape
@@ -151,6 +156,11 @@ def predict_boxes(heatmap, box_height, box_width):
     This function takes heatmap and returns the bounding boxes and associated
     confidence scores.
     '''
+    
+    # sns.set(context='notebook', style='darkgrid', palette='Blues_d', font='sans-serif', font_scale=1, color_codes=True, rc=None)
+    # heat_map = sns.heatmap(heatmap, annot=False)
+    # plt.show()
+
 
     print("Log: start predeciting boxes...")
 
@@ -292,6 +302,11 @@ def predict_boxes(heatmap, box_height, box_width):
 
     # ------- testrun19 -------------
     # changing topn to 10000, changing kernel to a smaller circle template
+    # used to produce test_train0 results 
+
+    # ------- testrun20 -------------
+    # changing kernel to redlightspot.jpg
+    # used to produce test_train1 results 
     topn = 10000 
     maxindices = np.argpartition(heatmap1d, -topn)[-topn:]
     # sort these indices by descending values 
@@ -421,7 +436,7 @@ preds_path = '../../data/hw02_preds'
 os.makedirs(preds_path, exist_ok=True) # create directory if needed
 
 # Set this parameter to True when you're done with algorithm development:
-done_tweaking = False
+done_tweaking = True
 
 '''
 Make predictions on the training set.
@@ -463,7 +478,7 @@ if done_tweaking:
         # convert to numpy array:
         I = np.asarray(I)
 
-        preds_test[file_names_test[i]] = detect_red_light_mf(I)
+        preds_test[file_names_test[i]] = detect_red_light_mf(I, file_names_train[i])
 
     # save preds (overwrites any previous predictions!)
     with open(os.path.join(preds_path,'preds_test.json'),'w') as f:
