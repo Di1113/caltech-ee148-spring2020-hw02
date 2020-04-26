@@ -24,6 +24,8 @@ import seaborn as sns
 # T_img = Image.open('redcircle.jpg')
 
 # ---- testrun19 ------------
+# ---- testrun21 ------------
+# redrawing boxes on images 
 T_img = Image.open('smallredcircle.jpg')
 
 # weights for red cicle color channels
@@ -156,7 +158,7 @@ def predict_boxes(heatmap, box_height, box_width):
     This function takes heatmap and returns the bounding boxes and associated
     confidence scores.
     '''
-    
+
     # sns.set(context='notebook', style='darkgrid', palette='Blues_d', font='sans-serif', font_scale=1, color_codes=True, rc=None)
     # heat_map = sns.heatmap(heatmap, annot=False)
     # plt.show()
@@ -410,7 +412,7 @@ def detect_red_light_mf(I, I_name):
 def saveimg_wbox(boxes, image_array, imagename):
     rimg = Image.fromarray(image_array)
     for box in boxes: 
-        x0, y0, x1, y1 = box[0], box[1], box[2], box[3]
+        x0, y0, x1, y1 = box[1], box[0], box[3], box[2]
         print("debug: bounding box coordinates: (%d, %d), (%d, %d)" % (x0, y0, x1, y1))
         # draw bounding box on original image
         draw = ImageDraw.Draw(rimg)
